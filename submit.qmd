@@ -1,28 +1,201 @@
 ---
-title: ""
-author: ""
-format:
-  html:
-    embed-resources: true
+title: "Lab 03"
+format: html
+editor: visual
 ---
 
-## Quarto
+## Lab 03
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+Importing Data
 
 ```{r}
-1 + 1
+
+download.file(
+  "https://raw.githubusercontent.com/USCbiostats/data-science-data/master/02_met/met_all.gz",
+  destfile = file.path("~", "Downloads", "met_all.gz"),
+  method   = "libcurl",
+  timeout  = 60
+)
+
+met <- data.table::fread(file.path("~", "Downloads", "met_all.gz"))
+met
+
 ```
 
-You can add options to executable code like this
+Finding the Dimensions
 
 ```{r}
-#| echo: false
-2 * 2
+dim(met)
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+First and Last Rows
+
+```{r}
+head(met)
+```
+
+```{r}
+tail(met)
+```
+
+```         
+
+
+```
+
+Structure of the data
+
+```{r}
+str(met)
+```
+
+Tabling the data by year
+
+```{r}
+table(met$year)
+```
+
+Tabling the data by day .
+
+```{r}
+table(met$day)
+```
+
+Tabling the data by hour.
+
+```{r}
+table(met$hour)
+```
+
+Summary of Temperature:
+
+```{r}
+summary(met$temp)
+```
+
+Summary of Elevation:
+
+```{r}
+summary(met$elev)
+```
+
+Summary of Winds:
+
+```{r}
+summary(met$wind.sp)
+```
+
+Replacing 9999.0 with NA
+
+```{r}
+met[met$elev==9999.0] <- NA
+summary(met$elev)
+```
+
+Order Temperature:
+
+```{r}
+met <- met[temp>-40]
+met2 <- met[order(temp)]
+head(met2)
+```
+
+Order Temperature:
+
+```{r}
+met <- met[temp>-15]
+met2 <- met[order(temp)]
+head(met2)
+```
+
+Summary Statistic:
+
+```{r}
+elev <- met[elev==max(elev), ]
+summary(elev)
+
+```
+
+Correlation Coefficient (wind vs temp):
+
+```{r}
+cor(elev$temp, elev$wind.sp, use="complete")
+```
+
+Correlation Coefficient (temp vs hour):
+
+```{r}
+cor(elev$temp, elev$hour, use="complete")
+```
+
+Correlation Coefficient (wind vs day):
+
+```{r}
+cor(elev$wind.sp, elev$day, use="complete")
+
+```
+
+Correlation Coefficient (temp vs day)
+
+```{r}
+cor(elev$temp, elev$day, use="complete")
+```
+
+Histogram of Elevation
+
+```{r}
+hist(met$elev, breaks=100)
+```
+
+Histogram of Temperatures
+
+```{r}
+hist(met$temp)
+
+```
+
+Histogram of Wind Speed
+
+```{r}
+hist(met$wind.sp)
+```
+
+Mapping
+
+```{r}
+#install.packages("leaflet")
+library(magrittr)
+library(leaflet)
+leaflet(elev) %>%
+  addProvilibrarderTiles('OpenStreetMap') >%>
+  addCircles(lat=~lat,lng=~lon, opacity=1, fillOpacity=1, radius=100)
+
+```
+
+Look at the time series of temperature and wind speed at this location. For this we will need to create a date-time variable for the x-axis.
+
+```{r}
+library(lubridate)
+elev$date <- with(elev, ymd_h(paste(year, month, day, hour, sep= ' ')))
+summary(elev$date)
+```
+
+Ordering Date:
+
+```{r}
+elev <- elev[order(date)]
+head(elev)
+```
+
+Plotting Date and Temperature:
+
+```{r}
+plot(elev$date, elev$temp, type='l')
+```
+
+Plotting Data and Wind:
+
+```{r}
+plot(elev$date, elev$wind.sp, type='l')
+```
