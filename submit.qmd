@@ -17,6 +17,7 @@ download.file(
   timeout  = 60
 )
 
+library(R.utils)
 met <- data.table::fread(file.path("~", "Downloads", "met_all.gz"))
 met
 
@@ -40,7 +41,6 @@ tail(met)
 ```
 
 ```         
-
 
 ```
 
@@ -166,10 +166,15 @@ Mapping
 ```{r}
 #install.packages("leaflet")
 library(magrittr)
+library(devtools)
 library(leaflet)
+library(knitr)
+#install.packages("knitr")
 leaflet(elev) %>%
-  addProvilibrarderTiles('OpenStreetMap') >%>
+  addProviderTiles('OpenStreetMap') %>%
   addCircles(lat=~lat,lng=~lon, opacity=1, fillOpacity=1, radius=100)
+
+
 
 ```
 
@@ -198,4 +203,42 @@ Plotting Data and Wind:
 
 ```{r}
 plot(elev$date, elev$wind.sp, type='l')
+```
+
+Final Question:
+
+Which day had in August (2018) had the highest temperature?
+
+```{r}
+library(ggplot2)
+
+met[met$temp == max(met$temp),]  #The 26th
+met[met$temp == min(met$temp),] #The 27th
+
+```
+
+What's the average, max, and median temperature per day?
+
+```{r}
+library(dplyr)
+tpd<-met %>%group_by(day) %>% summarise(mean(temp), max(temp), median(temp))
+tpd
+
+```
+
+Are wind speed and temperature related? Does wind speed depend on temperature?
+
+```{r}
+library(dplyr)
+cor(elev$temp, elev$wind.sp, use="complete")
+met %>% skimr::skim(wind.sp)
+met %>% ggplot(aes(x=temp, y=wind.sp)) + geom_jitter() + geom_smooth(method="lm")
+
+lm_1= lm(wind.sp~temp,met )
+summary(lm_1)
+
+
+
+
+
 ```
